@@ -1,5 +1,38 @@
 # NodeJS
-# Docs Reference: Books read
+# Index
+This notebook is a reference guide for backend development using Node. If you are learning from scratch, you can follow this sequentally: read introduction first, then fundamentals topics, and intermediate. If you are here just trying to learn something new or looking for an specific topic, feel free to use the index and go to the section that better suits your needs, as each module is intended to be isolated and self-explained, the order is just an arbitrary recomendation.
+
+The `book` tag you'll find in some sections, is for sections that serve as a 'index' for the main topics covered in the correspondent book. Those sections will be listed first. 
+
+Book references
+* [Book: NodeJs Complete Reference Guide](#book--nodejs-complete-reference-guide)
+
+Introduction
+* [Introduction: Node](#introduction--node)
+* [Introduction: Nodemon](#introduction--nodemon)
+* [Introduction: Debugging](#introduction--debugging)
+* [Introduction: Express](#introduction--express)
+* [Introduction: RESTful frameworks](#introduction--restful-frameworks)
+* [Introduction: Boilerplates setup](#introduction--boilerplates-setup)
+* [Introduction: Why and how to use Linter](#introduction--why-and-how-to-use-linter)
+* [Introduction: MVC](#introduction--mvc)
+* [Introduction: Backend Architecture Introduction](#introduction--backend-architecture-introduction)
+
+Fundamental level
+* [Fundamentals: Testing Node](#fundamentals--testing-node)
+* [Fundamentals: Middlewares](#fundamentals--middlewares)
+* [Fundamentals: Upload files](#fundamentals--upload-files)
+* [Fundamentals: Authentication](#fundamentals--authentication)
+* [Fundamentals: Common HTTP Req and Res](#fundamentals--common-http-req-and-res)
+* [Fundamentals: Sending Emails](#fundamentals--sending-emails)
+* [Fundamentals: Environment Variables](#fundamentals--environment-variables)
+* [Fundamentals: Heroku Deployment](#fundamentals--heroku-deployment)
+
+Intermediate level
+* [Intermediate - Socket.IO and WebSockets](#intermediate---socket-io-and-websockets)
+* [Intermediate: Chat libraries](#intermediate--chat-libraries)
+* [Intermediate: WebSocket Protocol](#intermediate--websocket-protocol)
+# Book: NodeJs Complete Reference Guide
 
 These are references from the topics I've considered important from differents book I've read so far. 
 
@@ -424,8 +457,16 @@ For this we will be using [SendGrid API](https://sendgrid.com/).
 Keep production and development environment variables separeted and secured using `.env` files in a `config` folder. 
 
 We will be using [env-cmd Library](https://www.npmjs.com/package/env-cmd) for executing command using an environment from an env file.
+# Fundamentals: Reference projects
+The following projects will serve you as reference for directory structure and tests.
+
+* [Task-manager](https://github.com/herrera-ignacio/task-manager)
+* [Auth-server](https://github.com/herrera-ignacio/auth-server)
+* [Chat-app](https://github.com/herrera-ignacio/chat-app)
 # Fundamentals: Heroku Deployment
 Basic steps for heroku deployment
+
+You must create an account in _heroku_ and download _Heroku CLI_ to use the following commands from your terminal.
 
 Create app
 ```
