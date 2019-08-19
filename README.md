@@ -440,12 +440,13 @@ heroku config
 ```
 
 Take in mind that `PORT` environment variable is handled by heroku and you don't need to specify it.
+
 # Intermediate - Socket.IO and WebSockets
 [Socket.IO](https://socket.io/) is a JavaScript library for __realtime__ web applications. It enables realtime, __bi-directional communication__ between web clients and servers. It has two parts: a client-side library that runs in the browser, and a server-side library for Node.js. Both components have a nearly identical API. Like Node.js, it is event-driven.
 
 Socket.IO primarily uses the WebSocket protocol with polling as a fallback option, while providing the same interface. Although it can be used as simply a wrapper for WebSocket, it provides many more features, including broadcasting to multiple sockets, storing data associated with each client, and asynchronous I/O.
 
-## Intermediate: Chat libraries
+# Intermediate: Chat libraries
 * [Mustache](https://cdnjs.com/libraries/mustache.js/): Render templates
 
 * [Moment](https://cdnjs.com/libraries/moment.js/): Manipulate time
@@ -458,7 +459,8 @@ https://cdnjs.cloudflare.com/ajax/libs/mustache.js/3.0.1/mustache.min.js
 https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js
 https://cdnjs.cloudflare.com/ajax/libs/qs/6.7.0/qs.min.js
 ```
-## Intermediate: WebSocket Protocol
+
+# Intermediate: WebSocket Protocol
 * Websockets allow for __full-duplex communication__. Server can also iniciate communication (request) to clients, without a request from a client before. Client connects to the server and remains connected as long as needed.
 
 * __Separate protocol__ from HTTP.
