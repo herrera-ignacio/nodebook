@@ -7,18 +7,23 @@ The `book` tag you'll find in some sections, is for sections that serve as a 'in
 Book references
 * [Book: NodeJs Complete Reference Guide](#book--nodejs-complete-reference-guide)
 
+Projects Reference
+* [Fundamentals: Reference projects](#fundamentals--reference-projects)
+
 Introduction
 * [Introduction: Node](#introduction--node)
 * [Introduction: Nodemon](#introduction--nodemon)
 * [Introduction: Debugging](#introduction--debugging)
 * [Introduction: Express](#introduction--express)
 * [Introduction: RESTful frameworks](#introduction--restful-frameworks)
+* [Introduction: REST](#introduction--rest)
 * [Introduction: Boilerplates setup](#introduction--boilerplates-setup)
 * [Introduction: Why and how to use Linter](#introduction--why-and-how-to-use-linter)
 * [Introduction: MVC](#introduction--mvc)
 * [Introduction: Backend Architecture Introduction](#introduction--backend-architecture-introduction)
 
 Fundamental level
+* [Fundamentals: Testing](#fundamentals--testing)
 * [Fundamentals: Testing Node](#fundamentals--testing-node)
 * [Fundamentals: Middlewares](#fundamentals--middlewares)
 * [Fundamentals: Upload files](#fundamentals--upload-files)
@@ -26,7 +31,11 @@ Fundamental level
 * [Fundamentals: Common HTTP Req and Res](#fundamentals--common-http-req-and-res)
 * [Fundamentals: Sending Emails](#fundamentals--sending-emails)
 * [Fundamentals: Environment Variables](#fundamentals--environment-variables)
+* [Fundamentals: Deploying Apps](#fundamentals--deploying-apps)
 * [Fundamentals: Heroku Deployment](#fundamentals--heroku-deployment)
+
+Architectural Patterns
+* [Intermediate: Architectural Patterns](#intermediate--architectural-patterns)
 
 Intermediate level
 * [Intermediate - Socket.IO and WebSockets](#intermediate---socket-io-and-websockets)
@@ -102,6 +111,11 @@ These are references from the topics I've considered important from differents b
 * Supertestmodels
 
 ---
+# Books to read
+* Building Bots with Node.js
+    * Stefan Buttigieg, Milorad Jevdjenic
+* Advanced Node.js Development
+    * Andrew Mead
 # Introduction: Node
 Node.js is a JavaScript runtime built on [Chrome's V8 Javascript engine](https://v8.dev/).
 
@@ -224,6 +238,79 @@ A Node.js web service framework optimized for building semantically correct REST
 [LOOPBACK](https://loopback.io/)
 
 Offering from StrongLoop, the current sponsor of the Express project. It offers a lot of features and is, of course, built on top of Express.
+# Introduction: REST
+We will cover the following topics:
+
+* __Representational State Transfer__ fundamentals
+* REST with HTTP
+* Essential differences compared to classical __SOAP__ based services (Simple Object Access Protocol)
+* Taking advange of existing infrastructure 
+
+ ### REST Fundamentals
+
+Back in 1999, Roy Fielding defined a set of principles built around the HTTP and URI standards that give birth to REST. 
+
+Let's look at the key principles around the HTTP and URI standards, sticking to which will make your HTTP application a RESTful service-enabled application:
+
+1. Everything is a resource
+2. Each resource is identifiable by a __unique identifier (URI)__
+3. Resources are manipulated via standard HTTP methods
+4. Resources can have multiple representations
+5. Communicate with resources in a stateless manner
+
+The native HTTP protocol (RFC 2616) defines eight actions, also known as HTTP verbs
+* GET
+* POST
+* PUT
+* DELETE
+* HEAD
+* OPTIONS
+* TRACE
+* CONNECT
+
+See [Fundamentals: Common HTTP Codes](#fundamentals--common-http-req-and-res).
+
+Resource manipulation operations through HTTP requests should always be considered atomic. All modifications of a resource should be carried out within an HTTP request in an isolated manner. After the request execution, the resource is left in a final state, this implicitly means that partial resource updates are not support. You should always send the complete state of the resoure.
+
+Another requirement for your RESTful application to be stateless is that once the service gets deployed on a production enviornment, it is likely that incoming requests are serverd by a load balancer, ensuring scalability and high availability. Once exposed via a load balancer, the idea of keeping your application state at server side gets compromised. You should keep it in a RESTful way, for example, keep a part of the state within the URI, or use HTTP headers to provide additional state-related data.
+
+The statelessness of your RESTful API isolates the caller against changes at the server side. Thus, the caller is not expected to communicate with the same server in consecutive requests. This allows easy application of changes within the server infrastructure, such as adding or removing nodes.
+
+ ### REST Goals
+
+* Separation of the representation and the resource
+    * Multiple representations available. It's up to the caller to specify the desired media type and then it's up the server application to handle the representation accordingly
+* Visibility
+    * Every aspect of it should be self-descriptive and follow the natural HTTP language
+* Reliability
+    * Which HTTP method are safe and indepmpotent in the REST context
+* Scalability
+    * Stateless is crucial, as scalign your application would require you to put another piece of hardware for a load balancer, or bring another instance in your cloud environment
+    * Is all about serving all your clients in an acceptable amount of time and keep your application running, preventing Denial of Service (DoS) caused by a huge amount of incoming requests
+* Performance
+    * Time needed for a single request to be processed
+
+ #### Safe HTTP Methods
+
+Considered to be safe provided that, when requested, it does not modify or cause any side effects on the state of the resource
+
+* GET
+
+ #### Idempotent HTTP Methods
+
+Consdired to be idempotent if its response stays the same, regardless of the number of times it is requested. 
+
+* GET
+* PUT
+* DELETE
+
+ ### Working with WADL
+
+Description language called __Web Application Definition Language__. This is an optional XML description of the interface of the service and defines an endpoint URL for invocation. Similar to WSDL for SOAP web services.
+
+ ### Documenting with Swagger
+
+Public APIs exposed on the web should be well documented. The [Swagger project](https://swagger.io/) addresses the ned for neat documentation of RESTful APIs. It defines a meta description of an API from an almost human-readable JSON format within a `swagger.json` file.
 # Introduction: Boilerplates setup
 Go ahead and start coding with these templates
 
@@ -322,6 +409,33 @@ SuperCoolShop has an huge number of products, and many different categories for 
 
 9. Alice’s browser receives the response and uses that information to create and render the view that Alice ultimately sees!
 
+# Fundamentals: Testing
+__Unit testing__: each unit is tested separately, isolating the unit under test as much as possible from other parts of the applications. A common technique is to use mock objects or mock data to isolate individual parts of the applications from one another. Usually __performed by developers__.
+
+__Functional testing__: doesn't try to test individual components, but instead it tests the whole system. Usually __performed by QA or QE team__ (QUality Assurance and Quality Engineering). 
+
+ #### Assert - the basis
+
+Node.js has a useful built-in testing tool, the `assert` module.
+
+ ### Mocha and Chai
+
+[Mocha](https://mochajs.org/) is one o many test frameworks available for Node.js. It help us write test cases and test suites, and it provides a test results reporting mechanism. It was chosen over the alternatives vecause it supports Promises. It fits very well with the Chai assertion library.
+
+Mocha requires that tests be CommonJS modules, a module `esm` exists to load an ES6 module into a CommonJS module.
+
+In `test` directory create a file named `test-model.js` containing this as the outher shell of the test suite:
+
+```javascript
+'use strict';
+
+require = require('esm')(module, {'esm':'js'});
+const assert = require('chai').assert;
+
+descrie('Model test', function () {
+    // ...
+});
+```
 # Fundamentals: Testing Node
 We will use [JEST Framework](https://jestjs.io/) to build our Test Suites and [SuperTest package](https://www.npmjs.com/package/supertest) to work with http requests.
 
@@ -463,6 +577,76 @@ The following projects will serve you as reference for directory structure and t
 * [Task-manager](https://github.com/herrera-ignacio/task-manager)
 * [Auth-server](https://github.com/herrera-ignacio/auth-server)
 * [Chat-app](https://github.com/herrera-ignacio/chat-app)
+# Fundamentals: Deploying Apps
+We'll cover the following:
+
+* Traditional LSB-compilant Node.js deployment
+* Using PM2 to improve reliability
+* Deployment to __Virtual Private Server (VPS)__
+* Microservice deployment with Docker
+* Deployment to a Docker hosting provider
+
+ ### Traditional Linux Service Deployment
+
+* __init script__ to manage background processes using shell scripts in the `/etc/init.d` directory.
+
+Web services have to be:
+
+* _Reliable_: auto-restart if the server process crashes
+* _Manageable_: integrates well with system managment practices
+* _Observable_: administrator must be able to get status and activity information
+
+The Linux package managment system doens't allow two MySQL instances. Instead, we implement separation in the same MySQL instance by using separate databases with different usernames and access privileges for each database.
+
+The MySQL server must support TCP connections from `localhost`. You can edit the configuration file `/etc/mysql/my.cnf`, to have the following line:
+
+```
+bind-address = 127.0.0.1
+```
+This limits MySQL server connections to the processes on the server.
+
+To send your files to your server, use the following:
+
+```
+rsync --archive --verbose ./ root@<server_ip>:/opt/
+```
+
+ ### PM2 to manage processes
+
+There are many ways to manage server processes, to ensure restarts if the process crashes, and so on. We'll use [PM2](http://pm2.keymetrics.io/) because it's optimized for Node.js processes. It bundles process management and monitoring into one application.
+
+Please read the documentation to properly install it in your production server.
+
+ ### Microservice deployment with Docker
+
+Docker automates the application deployment within software containers. The Docker implementation creates a layer of software isolation and virtualization based on Linux cgroups, kernel namespaaces, and union-capable filesystems, which blend together to make Docker what it is.
+
+A _Docker Container_ is a running instantiation of a _Docker Image_. An image is a given Linux OS and application configuration designed by developers for whatever purpose they gave in mind. Developers describe an image using a __Dockerfile__, that is a fairly simple-to-write script showing Docker how to build and image. Docker images are designed to be copied to any server, where the image is instatiated as a Docker container.
+
+Docker containerization is ver different from a virtual machine system such as VirtualBox. The processes running inside the container are actually runnin on the host OS. The containerization technology creates the illusion.
+
+Docker ecosystem contains may tools, we'll focus on the following:
+
+* __Docker engine__: Core execution system that orchestrates everything. It runs on a Linux host system, exposing network-based API that client applications ue to make Docker requests, such as building, deploying and running containers.
+* __Docker machine__: Client application performing functions around provisioning Docker Engine instances on host computers.
+* __Docker compose__: Helps you define, in a single file, a multi-cointainer application with all its dependencies defined.
+
+ ### Installing Docker
+
+We're looking for the Docker __Community Edition (CE)__ Because Docker runs on Linux, it does not run antively on macOS or Windows, and installation on either OS requires installing Linux inside a virtual machine and then running Docker tools within that virtual Linux machine.
+
+ ### Deployment
+
+Docker __Orchestrator__ services automatically deploy and manage Docker containers over a group of machines. Examples of this are Docker Swarm, Kubernetes, CoreOS Fleet and Apache MEsos.
+
+The `docker-mahine` command comes with drivers supporting a lnog list of cloud-hosting providers.
+
+For DigitalOcean, you would use something like thise:
+
+```
+docker-machine create --driver digitalocean --digitalocean-size 2gb \
+--digitalocean-access-token TOKEN-FROM-PROVIDER sandbox
+```
 # Fundamentals: Heroku Deployment
 Basic steps for heroku deployment
 
@@ -482,7 +666,44 @@ heroku config
 
 Take in mind that `PORT` environment variable is handled by heroku and you don't need to specify it.
 
-# Intermediate - Socket.IO and WebSockets
+# Intermediate: Architectural Patterns
+For developing an ecosystem of microservices.
+
+* Front Controller
+* Layered
+* Service Locator
+* Observer
+
+ ### Front Controller
+
+The __Front Controller__ pattern is when all requests go for a single point in your architecture, called the __handler__, which then processes and dispatches the requests to other handlers. This is the pattern used by, for example, load balancers and reverses proxies.
+
+It's usefull to scale horizontally and in helping other services not having to know where the controllers are and choosing the one with the lowest load that should handle the request faster. 
+
+ ### Layered
+
+The __Layered pattern__ is common in filesystems and operative system. Consists of creating different layers that go from the raw data through to the data seen by a user.
+
+The idea is to separate the complexity of the different layers, each one not having to know how the others do their stasks.
+
+ ### Service Locator
+
+The __Service Locator__ pattern is actually an anti-pattern. Not considered a good practice because it adds much more complexity to an ecosystem. Consist of a central registry, called a _Service Locator_, where services register their abilities, and other servicies can consult the registry and know where the services they need are located.
+
+Similar to the _Front Controller_, but with added complexity, as you need to contact the Service Locator and the service you need, instead of just making a simple request to a Front Controller. 
+
+ ### Observer
+
+The __Observer pattern__ is used every day in Node.js. It consist of a __Subject__, which mantains a list of dependats, called __Observers__, which get notified of any state change happening on the SUbject.
+
+You can see this happening every time in your web browser when some code attaches an event listener to an object or interface elemen
+
+ ### Publish/Subscribe
+
+Similar pattern, __Pub-Sub__. You have _Subscribers_ that subscribe to a specific event, and then you have _Publishers_ that emit those events. 
+
+The different to the previous pattern may look very thin but is actually important. This pattern involves __third-party service__ and unlike the Observer pattern, __Publishers have no knowledge of the Subscribers__. This removes the need to handle and directly notify the Subscribers.
+# Intermediate: Socket.IO and WebSockets
 [Socket.IO](https://socket.io/) is a JavaScript library for __realtime__ web applications. It enables realtime, __bi-directional communication__ between web clients and servers. It has two parts: a client-side library that runs in the browser, and a server-side library for Node.js. Both components have a nearly identical API. Like Node.js, it is event-driven.
 
 Socket.IO primarily uses the WebSocket protocol with polling as a fallback option, while providing the same interface. Although it can be used as simply a wrapper for WebSocket, it provides many more features, including broadcasting to multiple sockets, storing data associated with each client, and asynchronous I/O.
