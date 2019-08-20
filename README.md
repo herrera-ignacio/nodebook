@@ -713,7 +713,7 @@ Socket.IO primarily uses the WebSocket protocol with polling as a fallback optio
 
 * [Moment](https://cdnjs.com/libraries/moment.js/): Manipulate time
 
-* [QS](): Query String - Set up room and user names
+* [QS](https://www.npmjs.com/package/qs): Query String - Set up room and user names
 
 CDN
 ```
@@ -722,6 +722,7 @@ https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js
 https://cdnjs.cloudflare.com/ajax/libs/qs/6.7.0/qs.min.js
 ```
 
+Please check the [reference project here!](https://github.com/herrera-ignacio/chat-app)
 # Intermediate: WebSocket Protocol
 * Websockets allow for __full-duplex communication__. Server can also iniciate communication (request) to clients, without a request from a client before. Client connects to the server and remains connected as long as needed.
 
