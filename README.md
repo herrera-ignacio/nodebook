@@ -13,6 +13,7 @@ Projects Reference
 Introduction
 * [Introduction: Node](#introduction--node)
 * [Introduction: Node Internals](#introduction--node-internals)
+* [Introduction: Event Loop](#introduction--event-loop)
 * [Introduction: Nodemon](#introduction--nodemon)
 * [Introduction: Debugging](#introduction--debugging)
 * [Introduction: Express](#introduction--express)
@@ -42,6 +43,9 @@ Intermediate level
 * [Intermediate - Socket.IO and WebSockets](#intermediate---socket-io-and-websockets)
 * [Intermediate: Chat libraries](#intermediate--chat-libraries)
 * [Intermediate: WebSocket Protocol](#intermediate--websocket-protocol)
+
+Advance Level
+* [Advanced: Enchance performance](#advanced--enchance-performance)
 # Introduction: Node
 Node.js is a JavaScript runtime built on [Chrome's V8 Javascript engine](https://v8.dev/).
 
@@ -748,6 +752,90 @@ Please check the [reference project here!](https://github.com/herrera-ignacio/ch
 
 * __Persistent connection__ between server and client.
 
+# Advanced: Enchance performance
+Recommended: Use Node in __Cluster__ Mode
+Experimental: Use _Worker Threads_
+
+ #### Benchmarking
+
+Use __Apache benchmark__ or `$ ab`.
+
+* `-n`: How many requests
+* `-c`: Concurrency (how many at the same time)
+
+Important measures:
+* Requests per second
+* Time per request
+
+Test command:
+```
+$ ab -c 50 -n 500 localhost:3000/route
+```
+
+ ## Clustering
+
+A Cluster Manager uses __multiple node instance__. It doesn't execute any application code, it's responsable of moderating the instances (start, restart, administrative tasks like serving static files or accessing databases).
+
+We still run a node instance, but the first instance will be refered as the 'Cluster Manager', that will be responsible for launching new __Worker Instances__. Cluster Manager will require the `cluster` module fron the STL.
+
+```
+const cluster = require('cluster');
+if (cluster.isMaster) {
+    cluster.fork();
+} else {
+    const express = require('express');
+    const app = express();
+    // ...
+}
+```
+
+---
+
+ ## PM2
+
+Usefull links
+* [Repository](https://github.com/Unitech/pm2)
+* [Website](https://pm2.io)
+* [Metrics](http://pm2.keymetrics.io/)
+
+Install it
+
+```javascript
+npm install -g pm2
+```
+
+Run your application
+
+```
+pm2 start index.js -i 0
+```
+
+0 will make pm2 launch as many instances as logical cores in your CPU.
+
+Stop application
+
+```
+pm2 delete index.js
+```
+
+Quick summary 
+```
+pm2 list
+```
+
+Detail information
+```
+pm2 show index
+pm2 monit
+```
+
+---
+
+ ## Worker Threads
+
+Uses Thread Pools, so we are limited from our CPU power.
+
+[> Web Worker Threads <](https://www.npmjs.com/package/webworker-threads)
 # Books to read
 * Building Bots with Node.js
     * Stefan Buttigieg, Milorad Jevdjenic
