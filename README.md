@@ -42,81 +42,6 @@ Intermediate level
 * [Intermediate - Socket.IO and WebSockets](#intermediate---socket-io-and-websockets)
 * [Intermediate: Chat libraries](#intermediate--chat-libraries)
 * [Intermediate: WebSocket Protocol](#intermediate--websocket-protocol)
-# Book: NodeJs Complete Reference Guide
-
-These are references from the topics I've considered important from differents book I've read so far. 
-
- ### Node.js complete reference guide
-
-* HTTP Server and Client objects
-    * HTTP Client request
-    * Calling a REST backend service for heavy computational tasks
-
-* Express
-    * Promises and Async functions
-    * MVC Paradigm
-    * CRUD
-    * Scaling up (running multiple servers)
-
-* Mobile-first paradigm
-    * Twitter Boostrap
-    * Flexbox (12 column grid)
-
-* Logging and debugging
-    * Logger (`morgan`)
-    * `rotating-file-stream` package
-    * `debug` package
-    * `uncaughtExceptions`
-    * handle `unhandledPromise` with `util`
-
-* CommonJS Modules vs ES6 Modules
-    * `app.js` vs `app.mjs`
-    * `require` vs `import`
-    * `__dirname` vs `import.meta.url`
-    * `bin/www` as an ES6 Module
-
- ##### Data Storage and Retrieval
-
-* Data Storage and Retrieval
-    * filesystem
-        * Storage in `JSON`
-        * `fs-extra` moule, Promised-based function to the `fs` module
-        * `get JSON()` and `JSON.stringify(object)`
-        * `static fromJSON(json)` and `JSON.parse(json)`
-    * Dynamic import of ES6 Modules
-        * `require(process.env.NOTES_MODEL ? path.join('.., ...) : 'models'/notes-memory)`
-        * `import()` function that returns a Promise that will resolve to the imported module
-    * LevelUP
-        * Node.js-friendly wrapper around the LevelDB engine by Google (local NoSQL data storage in web browsers)
-    * SQLite3
-        * Schemas
-        * `"sqlite3-setup": "sqlite3 dbname.sqlite3 --init models/schema.sql"`
-    * ORM - Sequelize
-
-* SQLite3
-    * PROS
-        * Lightweight (doesn't require a server)
-        * Self-contained
-        * No-set-up-required, just `npm install sqlite3`
-
-* MongoDB
-    * JSON Documents
-    * Mongoose ORM
-
- ##### Authentication
-
-* `express-session` middleware
-* PassportJS
-* Restify: `restify-server` `restify-client` (doesn't support a Promise-oriented API)
-* Superagent: `superagent` (support for Promise-orientd API)
-* Supertestmodels
-
----
-# Books to read
-* Building Bots with Node.js
-    * Stefan Buttigieg, Milorad Jevdjenic
-* Advanced Node.js Development
-    * Andrew Mead
 # Introduction: Node
 Node.js is a JavaScript runtime built on [Chrome's V8 Javascript engine](https://v8.dev/).
 
@@ -823,3 +748,78 @@ Please check the [reference project here!](https://github.com/herrera-ignacio/ch
 
 * __Persistent connection__ between server and client.
 
+# Books to read
+* Building Bots with Node.js
+    * Stefan Buttigieg, Milorad Jevdjenic
+* Advanced Node.js Development
+    * Andrew Mead
+# Book: NodeJs Complete Reference Guide
+
+These are references from the topics I've considered important from differents book I've read so far. 
+
+ ### Node.js complete reference guide
+
+* HTTP Server and Client objects
+    * HTTP Client request
+    * Calling a REST backend service for heavy computational tasks
+
+* Express
+    * Promises and Async functions
+    * MVC Paradigm
+    * CRUD
+    * Scaling up (running multiple servers)
+
+* Mobile-first paradigm
+    * Twitter Boostrap
+    * Flexbox (12 column grid)
+
+* Logging and debugging
+    * Logger (`morgan`)
+    * `rotating-file-stream` package
+    * `debug` package
+    * `uncaughtExceptions`
+    * handle `unhandledPromise` with `util`
+
+* CommonJS Modules vs ES6 Modules
+    * `app.js` vs `app.mjs`
+    * `require` vs `import`
+    * `__dirname` vs `import.meta.url`
+    * `bin/www` as an ES6 Module
+
+ ##### Data Storage and Retrieval
+
+* Data Storage and Retrieval
+    * filesystem
+        * Storage in `JSON`
+        * `fs-extra` moule, Promised-based function to the `fs` module
+        * `get JSON()` and `JSON.stringify(object)`
+        * `static fromJSON(json)` and `JSON.parse(json)`
+    * Dynamic import of ES6 Modules
+        * `require(process.env.NOTES_MODEL ? path.join('.., ...) : 'models'/notes-memory)`
+        * `import()` function that returns a Promise that will resolve to the imported module
+    * LevelUP
+        * Node.js-friendly wrapper around the LevelDB engine by Google (local NoSQL data storage in web browsers)
+    * SQLite3
+        * Schemas
+        * `"sqlite3-setup": "sqlite3 dbname.sqlite3 --init models/schema.sql"`
+    * ORM - Sequelize
+
+* SQLite3
+    * PROS
+        * Lightweight (doesn't require a server)
+        * Self-contained
+        * No-set-up-required, just `npm install sqlite3`
+
+* MongoDB
+    * JSON Documents
+    * Mongoose ORM
+
+ ##### Authentication
+
+* `express-session` middleware
+* PassportJS
+* Restify: `restify-server` `restify-client` (doesn't support a Promise-oriented API)
+* Superagent: `superagent` (support for Promise-orientd API)
+* Supertestmodels
+
+---
