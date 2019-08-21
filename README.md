@@ -12,6 +12,7 @@ Projects Reference
 
 Introduction
 * [Introduction: Node](#introduction--node)
+* [Introduction: Node Internals](#introduction--node-internals)
 * [Introduction: Nodemon](#introduction--nodemon)
 * [Introduction: Debugging](#introduction--debugging)
 * [Introduction: Express](#introduction--express)
@@ -172,7 +173,7 @@ In node.js an event can be described simply as a string with a corresponding cal
  ##### Node API 
 
 * Node.js does __support asynchronous behavior__.
-* Asynchornous event-based system 
+* Asynchronous event-based system 
 * Call stack is used for the debugging stack trace 
 
 ---
@@ -193,6 +194,98 @@ $ npm install pg --save
 ```
 
 Configuring Database Pool
+# Introduction: Node Internals
+    The two most important Node dependencies:
+
+* V8 Engine Project
+    * C++ and Javascript
+    * Run Javascript outside of browser
+* libuv Project
+    * 100% C++ Open-source
+    * Access to file-system
+    * Access to networking
+    * Concurrency
+
+Node is written in C++ and Javascript, that provides a series of wrappers (Standard Library) like `http`, `fs`, `crypto`, and `path`, as APIs for the V8 and libuv implementations. 
+
+ #### Node execution hierarchy
+
+* Javascript code we write
+* Node's Javascript Side (lib folder in Node repo)
+    * `process.binding()`: Connects JS and C++ functions
+    * __V8__: Converts values between JS and C++ world
+* Node's C++ Side (src folder in Node Repo)
+* __libuv__: Gives Node easy access to underyling OS
+
+ ## Threads
+
+Process: instance of a computer program that is being executed. Between a single process we can have multiple threads, that work as simple to-do lists that are run one by one.
+
+`OS Scheduler` decides which thread should be processed.
+
+# Introduction: Event Loop
+Pseudocode idea
+
+```javascript
+// Node starts
+
+const pendingTimers = [];
+const pendingOSTasks = [];
+const pendingOperations = [];
+
+// New timers, tasks, operations are recorded from myFile running
+myFile.runContents();
+
+function shouldContinue() {
+    // Check one: Any pending setTimeout, setInterval, setImmediate
+    // Check two: Any pending OS tasks (like server listening to port)
+    // Check three: Any pending long running operations (like fs module)
+
+    return pendingTimers.length || pendingOSTasks.length || pendingOperations.length
+}
+
+// Entire body executes in one 'tick'
+while(shouldContinue()) {
+    // 1) Node looks at pendingTimers and sees if any functions
+    // are ready to be called (setTimeout, setInterval)
+
+    // 2) Node looks at pendingOSTasks and pendingOperations (threadpool)
+    // and calls relevant callbacks
+
+    // 3) Pause execution. Continue when...
+    // - a new pendingOSTask is done
+    // - a new pendingOperation is done
+    // - a timer is about to complete
+
+    // 4) Look at pendingTimers (setImmediate)
+
+    // 5) Handle any 'close' events
+}
+
+// Exit back to terminal
+```
+
+---
+
+ ### Single Threaded?
+
+Node Event Loop is __Single Threaded__, but some of Node Framework/Std Lib is not and is not executed inside that single thread. We can do other things insde the event loop while those calculations happen.
+
+ ### Libuv Thread Pool
+
+For some of the standard library function calls, the Node C++ side and Libuv __do expensive and heavy calculations tasks totally outside the event loop__. There are 4 other threads on the Libuv __Thread pool__ that can be used.
+
+All `fs` module functions, and some of crypto use it. Depends on OS (Windows vs UNIX based).
+
+_Change the pool size_:
+```javascript
+process.env.UV_THREADPOOL_SIZE = 2;
+```
+
+Libuv can delegate operations to our OS that doesn't use the Thread Pool. (OS Async Helpers)
+
+For example, with the `https` module, request are made by the OS, and there's no blocking of the event loop. OS decides how to use threads. Almost everything around networking for all OS's use the OS's async features.
+
 # Introduction: Nodemon
 [Nodemon](https://nodemon.io/) is a utility that will monitor for any changes in your source and automatically restart your server. Perfect for development. Install it using npm.
 
