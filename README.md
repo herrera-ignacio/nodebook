@@ -46,6 +46,7 @@ Intermediate level
 
 Advance Level
 * [Advanced: Enchance performance](#advanced--enchance-performance)
+* [Advanced: Data Caching with Redis](#advanced--data-caching-with-redis)
 # Introduction: Node
 Node.js is a JavaScript runtime built on [Chrome's V8 Javascript engine](https://v8.dev/).
 
@@ -836,6 +837,267 @@ pm2 monit
 Uses Thread Pools, so we are limited from our CPU power.
 
 [> Web Worker Threads <](https://www.npmjs.com/package/webworker-threads)
+# Advanced: Data Caching with Redis
+eThis can be done with any database, but I will focus on usage with MongoDB.
+
+When a requst is made to our server, the __route handler__ sees request, and tells Mongoose to get records. Mongoose reaches out to mongodb, fetches data and server responds to the request.
+
+ ### Redis Introduction
+
+In-memory data store, is essentially a tiny database that runs in your machine and writes/reads data really quick. It operates in memory so data doesn't persist when machine stops.
+
+For Node integration, we will use `node-redis`, so we can interact with a Redis Server.
+
+Install Redis on MacOS:
+
+```
+brew install redis
+brew services start redis
+redis-cli ping // check server on
+```
+
+The documentation on how to interact with the server, is here: 
+https://redis.io/documentation
+
+ #### Redis Gotcha
+
+You can only store __numbers__ and __letters__. You cannot store a plain javascript object.
+
+You can still use `JSON.stringify({...})` and `JSON.parse('{...}')`.
+
+ #### node-redis
+
+_Connect to redis_
+```javascript
+const redis = require('redis')
+const redisUrl = 'redis://127.0.0.1:6379'
+const client = redis.createClient(redisUrl)
+```
+
+_Setting and getting values_:
+```javascript
+set('key', 'value');
+get('key', (err, val) => console.log(val));
+```
+
+---
+
+ ### Cache Keys
+
+We want query keys that are _consistent_ but _unique_ between query executions.
+
+ ### Promisifying function
+
+We'll write the cache logic directly in a demo request for now, but later on it will be isolated. By default the `client.get` provided by redis client doesn't support promises. So we are going to use `promisify` from `util` module to make use of promises.
+
+In this example, the cache key will be the `user.id`.
+
+```javascript
+app.get('/api/blogs', requireLogin, async (req, res) => {
+    const redis = require('redis');
+    const redisUrl = 'redis://127.0.0.1:6379'
+    const client = redis.createClient(redisUrl)
+
+    const util = require('util');
+    client.get = util.promisify(client.get);
+
+    // Do we have any cached data in redis related
+    // to this query?
+    const cachedBlogs = await client.get(req.user.id);
+
+    // If yes, then respond to the request right away
+    if (cachedBlogs) {
+        console.log('SERVING FROM CACHE');
+        return res.send(JSON.parse(cachedBlogs));
+    }    
+
+    // If no, we need to respond to th request
+    // and update our cache to store the data    
+
+    const blogs = await Blog.find({ _user: req.user.id });
+
+    console.log('SERVING FROM MONGO');
+    res.send(blogs);
+
+    client.set(req.user.id, JSON.stringify(blogs));
+});
+```
+This won't update cache when new blogs are added (cached values never expire). That's a big issue.
+Another issue is that the redis client setup logic, shouldn't be done in the request. 
+
+ ## Cache solution (Refactor)
+
+__Cached values never expire__: Add timeouts to values assigned to reddis and the ability to reset all values tied to some specific event (as adding a new value).
+
+__Cache keys wont work when we introduce other collections or query options__: Figure out a more robust solution for generating cache keys. A solution would be to _stringify the query_ and use it as the key (as the query would be unique).
+
+__Caching code isn't easily reusable anywhere else in our codebase__: Hook in to Mongoose's query generation and execution process. We could take advantage of Javascript Prototypal inheritance, to modify the `Query` mongoose function with a new method.
+
+```javascript
+const mongoose = require('mongoose');
+
+const exec = mongoose.Query.prototype.exec;
+
+mongoose.Query.protototype.exec = function() {
+    console.log("I'M ABOUT TO RUN A QUERY");
+
+    return exec.apply(this, arguments);
+};
+```
+
+Making _unique keys_
+```javascript
+const mongoose = require('mongoose');
+
+const exec = mongoose.Query.prototype.exec;
+
+mongoose.Query.protototype.exec = function() {
+    console.log("I'M ABOUT TO RUN A QUERY");
+
+    const key = Object.assign({}, this.getQuery(), {
+        collection: this.mongooseCollection.name
+    });
+
+    return exec.apply(this, arguments);
+};
+```
+
+Restore _redis configuration_
+```javascript
+const mongoose = require('mongoose');
+const redis = require('redis');
+const util = require('util');
+
+const redisUrl = 'redis://127.0.0.1:6379';
+const client = redis.createClient(redisUrl);
+client.get = util.promisify(client.get);
+const exec = mongoose.Query.prototype.exec;
+
+mongoose.Query.protototype.exec = function() {
+    console.log("I'M ABOUT TO RUN A QUERY");
+
+    const key = Object.assign({}, this.getQuery(), {
+        collection: this.mongooseCollection.name
+    });
+
+    return exec.apply(this, arguments);
+};
+```
+
+Cache _implementation_
+
+```javascript
+mongoose.Query.protototype.exec = async function() {
+    const key = Object.assign({}, this.getQuery(), {
+        collection: this.mongooseCollection.name
+    });
+
+    // See if we have a value for 'key' in redis
+    const cacheValue = await client.get(key);
+
+    // If we do return that
+    if (cacheValue) {
+        // we need to return a mongoose document, not plain json
+        const doc = JSON.parse(cacheValue);
+
+        // application is waiting an array of documents
+        return Array.isArray(doc)
+            ? doc.map(d => new this.model(d))
+            : new this.model(doc);
+    }
+
+    // Otherwise, issue the query and store the result in redis
+    const result = await exec.apply(this, arguments);
+    // result is a mongoose document, not a plain json object
+    
+    client.set(key, JSON.stringify(result));
+
+    return result;
+};
+```
+
+ ### Toggleable Cache
+
+```javascript
+mongoose.Query.prototype.cache = function() {
+    this.useCache = true;
+}
+
+mongoose.Query.prototype.exec = async function() {
+    if (!this.useCache) {
+        return exec.apply(this, arguments) 
+    }
+}
+```
+
+```javascript
+app.get('/api/blogs', requireLogin, async (req, res) => {
+    const blogs = await Blog
+        .find({ _user: req.user.id })
+        .cache()
+        .limit(10);
+}
+```
+
+ ### Expire Cache
+
+Automatic expiration
+```javascript
+mongoose.Query.prototype.exec = async function () {
+    // ...
+
+    client.set(key, JSON.stringify(result), 'EX', 10);
+}
+```
+
+Force expiration with __Hashes Keys__
+```javascript
+client.hget = util.promisify(client.hget);
+
+// If I want all data to be saved in an specific bucket, I can provide custom key
+mongoose.Query.prototype.cache = function (options = {}) {
+    this.useCache = true;
+    this.hashKey = JSON.stringify(options.key || '');
+
+    return this;
+}
+
+mongoose.Query.prototype.exec = async function () {
+    // ...
+    const cacheValue = await client.hget(this.hashKey, key);
+    
+    // ...
+    client.hset(this.hashKey, key, JSON.stringify(result), 'EX', 10);
+}
+```
+
+Remove cache using __hashes keys__
+```javascript
+module.exports = {
+    clearHash(hashKey) {
+        client.del(JSON.stringify(hashKey));
+    }
+}
+```
+
+Then when creating new data, call this function `clearHash(req.user.id)`.
+
+ ### Automate Cache Cleaning Middleware
+
+Middleware
+```javascript
+const { clearHash } = require('../services/cache');
+
+module.exports = async (req, res, next) => {
+    await next();
+
+    clearHash(req.user.id);
+};
+```
+
+```javascript
+app.post('/api/blogs', requireLogin, async (req, res) => { ... }
+```
 # Books to read
 * Building Bots with Node.js
     * Stefan Buttigieg, Milorad Jevdjenic
