@@ -1098,6 +1098,123 @@ module.exports = async (req, res, next) => {
 ```javascript
 app.post('/api/blogs', requireLogin, async (req, res) => { ... }
 ```
+# Advanced: Automate Integration Testing
+We will be using:
+
+* [JEST](https://jestjs.io/)
+* [PUPPETEER](https://github.com/GoogleChrome/puppeteer)
+
+Testing Flow:
+
+* Start Jest test suite
+* Boot up a 'headless' version of Chromium
+* Programatically instruct Chromium to visit routes
+* Programatically instruct Chromium to click elements
+* Make assertions about content on screen
+
+ ### Set up
+
+Add test command to `package.json`
+
+```
+"scripts" : {
+    ...
+    "test": "jest"
+},
+...
+"dependencies" : {
+    "jest": <version>,
+    "puppeteer": <version>
+}
+
+```
+
+Make a folder in your project source folder called `tests`. 
+
+We'll follow the convention `component.test.js`, for example, if we are testing something in the application header, we would write a file called `header.test.js`.
+
+ ### Launch Chromium instances
+
+```javascript
+test('We can launch a browser', async () => {
+    const browser = await puppeteer.launch({
+        headless: false // watch gui    
+    });
+    const page = await browser.newPage();
+});
+```
+
+ ### Chromium navigation
+
+```javascript
+await page.goto('localhost:3000');
+```
+
+ ### Extracting Page Content
+
+```javascript
+const text = await page.$eval('css-class', el => el.innerHTML);
+
+expect(text).toEqual('whatever you want');
+```
+
+ ### DRY - Initialization tasks
+
+
+```javascript
+let browser, page;
+
+beforeEach(() => {
+    browser = await puppeteer.launch({});
+    page = await browser.newPage();
+    await page.goto('localhost:3000');
+});
+
+afterEach(() => {
+    await browser.close();
+});
+```
+
+ ### Assertion OAUTH Flow
+
+```javascript
+test('clicking login starts oauth flow', async () => {
+    await page.click('.right a');
+
+    const url = await page.url();
+
+    expect(url).toMatch(/accounts\.google\.com/);
+});
+```
+
+Take an existing user ID and generate a fake session object with it
+```javascript
+test('When signed in, shows logout button', async () => {
+    const id = '...;launch
+    const Buffer = require('safe-buffer').Buffer;
+    const sessionObject = {
+        passport: {
+            user: id
+        }
+    };
+    const sessionString = Buffer.from(
+        JSON.stringify(sessionObject)
+    ).toString('base64');
+
+    const Keygrip = require('keygrip');
+    const keys = require('../config/keys');
+    const keygrip = new Keygrip([keys.cookieKey]);
+    const sig = keygrip.sign('session=' + sessionString);
+
+    await page.setCookie({ name: 'session', value: sessionString });
+    await page.setCookie({ name: 'session.sig', value: sig });
+    await page.goto('localhost:3000');
+
+    page.waitFor('a[href="/auth/logout"]');
+    const text = await page.$eval('a[href="/auth/loguot"]', el => el.innerHTML)
+    expect(text).toEqual('Logout');
+});
+```
 # Books to read
 * Building Bots with Node.js
     * Stefan Buttigieg, Milorad Jevdjenic
