@@ -44,6 +44,7 @@ Intermediate level
 * [Intermediate: Chat libraries](#intermediate--chat-libraries)
 * [Intermediate: WebSocket Protocol](#intermediate--websocket-protocol)
 * [Intermediate: Unit testing (Mocha)](#intermediate--unit-testing--mocha)
+* [Intermediate: Routes testing (Supertest)](#intermediate--routes-testing--supertest)
 
 Advance Level
 * [Advanced: Enchance performance](#advanced--enchance-performance)
@@ -464,7 +465,7 @@ descrie('Model test', function () {
 });
 ```
 # Fundamentals: Testing Node
-We will use [JEST Framework](https://jestjs.io/) to build our Test Suites and [SuperTest package](https://www.npmjs.com/package/supertest) to work with http requests.
+We can write basic tests (and of course, more comple ones) with [JEST Framework](https://jestjs.io/) to build our Test Suites and [SuperTest package](https://www.npmjs.com/package/supertest) to work with http requests.
 
 Run script:
 ```
@@ -868,6 +869,28 @@ __Use a stub when you want to__:
 Install it with `npm i --save-dev rewire`. 
 
 You can call modules with `rewire` instead of `require`. This will give us access to private methods and attributes.
+
+ ## Test Coverage
+
+Use [Instanbuljs/NYC CLI](https://github.com/istanbuljs/nyc)
+
+You can start using it adding this to your `package.json` scripts:
+
+```json
+"coverage": "cross-env NODE_ENV=development nyc --reporter=text npm test"
+```
+# Intermediate: Routes testing (Supertest)
+We will be using the [Supertest framework](https://github.com/visionmedia/supertest#readme).
+
+Install it
+```
+npm install supertest --save-dev
+```
+
+Once installed it can now be referenced by simply calling `require('supertest')`;
+
+You may integrate it with your Mocha tests.
+
 # Advanced: Enchance performance
 Recommended: Use Node in __Cluster__ Mode
 Experimental: Use _Worker Threads_
