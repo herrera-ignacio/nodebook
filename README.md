@@ -43,10 +43,13 @@ Intermediate level
 * [Intermediate - Socket.IO and WebSockets](#intermediate---socket-io-and-websockets)
 * [Intermediate: Chat libraries](#intermediate--chat-libraries)
 * [Intermediate: WebSocket Protocol](#intermediate--websocket-protocol)
+* [Intermediate: Unit testing (Mocha)](#intermediate--unit-testing--mocha)
 
 Advance Level
 * [Advanced: Enchance performance](#advanced--enchance-performance)
 * [Advanced: Data Caching with Redis](#advanced--data-caching-with-redis)
+* [Advanced: Automate Integration Testing](#advanced--automate-integration-testing)
+* [Advanced: Continuous Integration](#advanced--continuous-integration)
 # Introduction: Node
 Node.js is a JavaScript runtime built on [Chrome's V8 Javascript engine](https://v8.dev/).
 
@@ -753,6 +756,117 @@ Please check the [reference project here!](https://github.com/herrera-ignacio/ch
 
 * __Persistent connection__ between server and client.
 
+# Intermediate: Unit testing (Mocha)
+We will be using [Mocha testing framework](https://mochajs.org/) and [Chai Assertion Library](https://www.chaijs.com/).
+
+Install it with `npm i -g mocha`.
+
+You can test Callbacks, Promises, Async/await, and more!
+
+Basic blueprint
+```javascript
+describe('File to be tested', () => {
+    context('function to be tested', () => {
+        it('should do something', () => {
+            assert.equal(2, 1+1);
+        });
+        
+        it('should do something else', () => {
+            assert.deepEqual({name: 'joe'}, {name:'joe'});
+        });
+    });
+
+    context('another context', () => {});
+});
+```
+
+Run your tests!
+```javascript
+mocha ./tests/*.test.js --recursive
+mocha ./lib/**/*.test.js
+```
+
+ ### Before and After
+
+```javascript
+describe('File to be tested', () => {
+    before(() => {});
+    after(() => {});
+
+    beforeEach(() => {});
+    afterEach(() => {});
+});
+```
+
+---
+
+ ## Chai Basics 
+
+Install it with `npm install --save-dev chai`.
+
+Blueprint
+```javascript
+const chai = require('chai');
+const expect = chai.expect;
+
+describe('File to be tested', () => {
+    it('Should compare some values', () => {
+        expect(1).to.equal(2);
+    });
+});
+```
+
+Lots of `expect().to` methods!
+
+ #### Chai Promises Addons
+
+Use this for testing async/await functions!
+
+```javascript
+const chaiAsPromised = require('chai-as-promised');
+chai.use(chaiAsPromised);
+```
+
+---
+
+ ## Environment Variables & Cross-Env
+
+You might use [cross-env npm package](https://www.npmjs.com/package/cross-env).
+Always test that `process.env.NODE_ENV` is DEVELOPMENT! Do not run your tests in staging/production as most of the times, test involves creating and dropping databases.
+
+---
+
+ ## Sinon and Test Doubles
+
+[Sinon](https://sinonjs.org/): test spies, stubs and mocks for JavaScript.
+
+Propery isolate the code you are testing.
+
+ #### Spies
+
+A test spy is a function that records arguments, return value, the value of this and exception thrown (if any) for all its calls. There are two types of spies: Some are anonymous functions, while others wrap methods that already exist in the system under test.
+
+Chai assertion has a handy library: `sinon-chai`, to make assertions related to Sinon.
+
+ #### Stubs
+
+Test stubs are functions (spies) with pre-programmed behavior.
+
+They support the full test spy API in addition to methods which can be used to alter the stub’s behavior.
+
+As spies, stubs can be either anonymous, or wrap existing functions. When wrapping an existing function with a stub, the original function is not called.
+
+__Use a stub when you want to__:
+
+1. Control a method’s behavior from a test to force the code down a specific path. Examples include forcing a method to throw an error in order to test error handling.
+
+2. When you want to prevent a specific method from being called directly (possibly because it triggers undesired behavior, such as a XMLHttpRequest or similar).
+
+ ## Rewire - Access private attributes
+
+Install it with `npm i --save-dev rewire`. 
+
+You can call modules with `rewire` instead of `require`. This will give us access to private methods and attributes.
 # Advanced: Enchance performance
 Recommended: Use Node in __Cluster__ Mode
 Experimental: Use _Worker Threads_
@@ -1215,6 +1329,77 @@ test('When signed in, shows logout button', async () => {
     expect(text).toEqual('Logout');
 });
 ```
+# Advanced: Continuous Integration
+__What is CI?__
+Process to merge all code changes into a single branch.
+
+__What is a CI server?__
+Server than runs automatic checks (tests) on the codebase to ensure that changes haven't broken anything. 
+
+ #### CI Flow
+
+* Developer pushes code to remote repositry
+* CI Server detects that a new push of code has occured
+* CI Server clones project to a cloud based virtual machine
+* CI Server runs all tests
+* If all tests pass, CI Server marks build as 'passing' and does some optional followup
+    * Send an email
+    * Automatically deploy
+    * Put notification on Github
+    * etc...
+
+ #### CI Providers
+
+Services that provides CI Servers.
+
+The flow we will be using, will focus on __Github__. Others providers, like gitlab, use differents solutions.
+
+* __Travis__ CI (We'll use this!)
+* Circle CI
+* Codeship
+* AWS Codebuild
+
+
+ ### Travis workflow
+
+Check official documentation!
+https://docs.travis-ci.com/
+
+* Push code to Github
+* Travis automatically detects pushed code
+* Travis clones our project
+* Travis runs tests using a `.travis.yml` file
+* If tests are OK, Travis sends us an email 
+
+ ### `.travis.yml`
+
+```yml
+language: node_js
+node_js:
+    - "8"
+dist: trusty
+services:
+    - mongodb
+    - redis-server
+env:
+    - NODE_ENV=ci
+cache:
+    directories:
+        - node_modules
+        - client/node_modules
+install:
+    - npm install
+    - npm run build // create-react-app
+script:
+    - nohup npm run start &
+    - sleep 3
+    - npm run test
+```
+
+`nohup`: If the shell is closed, dont kill anything this command creates
+`&`: Run this command in a subshell (background)
+
+Check Travis documentation on how to setup your particular database.
 # Books to read
 * Building Bots with Node.js
     * Stefan Buttigieg, Milorad Jevdjenic
