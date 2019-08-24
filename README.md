@@ -52,6 +52,11 @@ Advance Level
 * [Advanced: Automate Integration Testing](#advanced--automate-integration-testing)
 * [Advanced: Continuous Integration](#advanced--continuous-integration)
 * [Advanced: Scalable Image Upload](#advanced--scalable-image-upload)
+
+
+Docker Containers
+* [Advanced: Docker](#advanced--docker)
+* [Advanced: Docker Compose](#advanced--docker-compose)
 # Introduction: Node
 Node.js is a JavaScript runtime built on [Chrome's V8 Javascript engine](https://v8.dev/).
 
@@ -1486,6 +1491,124 @@ const s3 = new AWS.S3({
 A web application executes a cross-origin HTTP request when it requests a resource that has a different origin (domain, protocol, or port) than its own origin.
 
 __We need to allow CORS on the S3 Bucket__, for PUT/POST requests (the request we use to upload images). Only allow localhost as origin. 
+# Advanced: Docker
+> Docker is a set of platform-as-a-service products that use operating-system-level virtualization to deliver software in packages called containers.
+
+ ### Docker Client
+
+* `docker run <image_name> [-d]` = `docker create <image>` + `docker start <image>`
+    * `<command>`: Override default command
+    * `-d`: Run in background
+
+* `docker ps [-all]`: List running containers
+
+* `docker system prune`
+
+* `docker stop/kill <container_id>`
+
+* `docker logs <container_id>`
+
+* `docker exec [-it] <container_id> <command>`
+    * `-it` = `-i` & `-t`
+
+* `docker exec -it <container_id> sh/bash`: Get a Command Prompt in a Container
+
+* `docker run -it <image> sh`: Starting with a Shell
+
+ ### Docker Server - Custom Images
+
+* __Dockerfile__: Configuration to define how our container should behave
+    * Base Image
+    * Run some commands to install additional programs
+    * Specifiy a command to run on container startup
+* Docker Client & Docker Server
+* Usable Image!
+
+* `docker build .` and `docker run <image_id>`
+
+Convention TAG: `docker build -t <your_docker_id>/<project_name>:<version/latest> .`
+
+Manual image Generation with _Docker Commit_: `docker commit -c 'CMD ["<comand"] <container_id>`
+
+ ### Real Project Setup
+
+Project Outline
+* Create Node JS web app
+* Create a Dockerfile
+* Build image from dockerfile 
+* Run image as container
+* Connect to web app from a browser
+
+ #### Dockerfile
+```
+FROM node:apline
+
+WORKDIR /usr/app
+
+// Install dependencies
+COPY ./package.json ./
+RUN npm install
+
+// Copy everything then
+COPY ./ ./
+
+// Default commands
+CMD ["npm", "start"]
+
+```
+
+We don't want to be working by default on the root directory, that's why we use `WORKDIR`. If the folder doesn't exist, it won't be created, and any further commands will be executed here.
+
+Container takes snapshots of FS (filesystem), so any local updates won't be reflected inside the container. To solve this, we need to _rebuild container_. We want to minimize cache busting and rebuilds (we don't want to re-install all depednencies).
+
+
+
+ #### Port Mapping
+
+`docker run -p 8080:8080 <image_id>`
+
+What `p` does is routes incoming request `<localhost_port>:<container_port>`.
+# Advanced: Docker Compose
+Orchest differnt docker containers to work together. Alternative to Docker CLI Network tools.
+
+* `docker-compose up [--build]` = `docker build .` & `docker run <myimage>`
+* `docker-compose up [-d]`: Run in background
+* `docker-compose down`: Stop all containers
+* `docker-compose ps`: Status of running containers that belong to the `docker-compose.yml` file
+
+ #### Automatic Container Restarts
+
+_Restart Policies_
+* no
+* always
+* on-failure
+* unless-stopped
+
+ #### `docker-compose.yml`
+
+Contains all the options we'd normally pass to docker-cli (`build` and `run` commands).
+
+```yml
+version: '3'
+services: 
+    redis-server:
+        image: 'redis'
+    node-app:
+        restart: always
+        build: .
+        ports:
+            - "4001:8081:
+```
+
+Docker containers can communicate together by default.
+We would connect to the redis server from or node code like this:
+
+```javascript
+const client = redis.createClient({
+    host: 'redis-server',
+    port: 6379
+});
+```
 # Books to read
 * Building Bots with Node.js
     * Stefan Buttigieg, Milorad Jevdjenic
