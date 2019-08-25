@@ -1568,6 +1568,117 @@ Container takes snapshots of FS (filesystem), so any local updates won't be refl
 `docker run -p 8080:8080 <image_id>`
 
 What `p` does is routes incoming request `<localhost_port>:<container_port>`.
+
+
+ #### Volumes
+
+Replicate local changes on container!
+
+```
+docker run -p 3000:3000 -v /app/node_modules -v $(pwd):/app <image_id>
+```
+
+The first `-v /app/node_modules` is for bookmarking.
+
+Or with __Docker Compose__:
+
+```
+services:
+    yourservice:
+        build: .
+        ports:
+            - 3000:3000
+        volumes:
+            - /app/node_modules
+            - .:/app
+```
+
+ ## Production-Grade Workflow
+
+Flow tools
+* Github
+    * master branch
+    * feature branch
+* Travis
+    * Pull requests CI
+* AWS Elastic Beanstalk
+* __Docker__: makes some of these tasks a lot easier!
+
+ ### Development Environment
+
+```
+docker build -f Dockerfile.dev .
+docker run -p 3000:3000 <container_id>
+```
+
+ #### Live updating Tests
+
+Run tests at start
+```
+docker run -it <container_id> npm run test
+```
+
+Run tests on running container (and get access to shell)
+```
+// get container id
+docker ps
+
+// run tests
+docker exec -it <container_id> npm run test
+```
+
+_Docker Compose_ solution, test will run before `--build` (no access to shell).
+```
+services:
+    yourservice:
+        tests:
+            build: 
+                context: .
+                dockerfile: Dockerfile.dev
+            volumes:
+                - ...
+            command: ["npm", "run", "test"]
+```
+
+Ussing `attach` (same as docker compose).
+```
+docker attach <container_id>
+```
+
+ ### Production Environment
+
+Web Container
+* Production Server - `nginx`
+    * index.html
+    * main.js
+
+Build Phase 
+* Use node:alpine
+* Copy `package.json`
+* Install dependencies
+    * Only the one needed to execute `npm run build`
+* `npm run build`
+
+Run phase
+* Use nxinx
+* Copy over the result of `npm run build`
+* Start nginx
+
+
+__Dockerfile__
+```dockerfile
+FROM node:alpine as builder
+WORKDIR '/app'
+COPY package.json
+RUN npm install
+COPY . .
+RUN npm run build
+
+# run phase
+FROM nginx
+COPY --from=builder /app/build /usr/share/nginx/html
+
+```
 # Advanced: Docker Compose
 Orchest differnt docker containers to work together. Alternative to Docker CLI Network tools.
 
@@ -1608,6 +1719,16 @@ const client = redis.createClient({
     host: 'redis-server',
     port: 6379
 });
+```
+
+ #### Override Dockerfile Selection 
+
+```
+services:
+    yourservice:
+        build: 
+            context: .
+            dockerfile: Dockerfile.dev
 ```
 # Books to read
 * Building Bots with Node.js
