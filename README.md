@@ -46,7 +46,7 @@ Intermediate level
 * [Intermediate: Unit testing (Mocha)](#intermediate--unit-testing--mocha)
 * [Intermediate: Routes testing (Supertest)](#intermediate--routes-testing--supertest)
 
-Advance Level
+Advanced Level
 * [Advanced: Enchance performance](#advanced--enchance-performance)
 * [Advanced: Data Caching with Redis](#advanced--data-caching-with-redis)
 * [Advanced: Automate Integration Testing](#advanced--automate-integration-testing)
@@ -57,6 +57,10 @@ Advance Level
 Docker Containers
 * [Advanced: Docker](#advanced--docker)
 * [Advanced: Docker Compose](#advanced--docker-compose)
+* [Advanced: Multi-Container App](#advanced--multi-container-app)
+
+CI/CD
+* [Advanced: CI/CD AWS & Travis](#advanced--ci-cd-aws---travis)
 # Introduction: Node
 Node.js is a JavaScript runtime built on [Chrome's V8 Javascript engine](https://v8.dev/).
 
@@ -1679,6 +1683,8 @@ FROM nginx
 COPY --from=builder /app/build /usr/share/nginx/html
 
 ```
+
+
 # Advanced: Docker Compose
 Orchest differnt docker containers to work together. Alternative to Docker CLI Network tools.
 
@@ -1730,6 +1736,278 @@ services:
             context: .
             dockerfile: Dockerfile.dev
 ```
+# Advanced: CI/CD AWS & Travis
+ ### `.travis.yml`
+
+```yml
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t <username/project_name> -f Dockerfile.env .
+
+script:
+    - docker run -e CI=true <username/project_name> npm run test -- --coverage
+
+```
+
+ ### AWS Elastic Beanstalk
+
+AWS Elastic Beanstalk is an orchestration service offered by Amazon Web Services for deploying applications which orchestrates various AWS services, including EC2, S3, Simple Notification Service (SNS), CloudWatch, autoscaling, and Elastic Load Balancers.[2] Elastic Beanstalk provides an additional layer of abstraction over the bare server and OS; users instead see a pre-built combination of OS and platform.
+
+ #### Travis fo deployment
+
+`.travis.yml`
+```
+deploy:
+    provider: elasticbeanstalk
+    region: "us-west-2" // Check URL
+    app: your_aws_app_name
+    env: your_aws_env_name
+    bucket_name: your_bukcet // Check AWS S3
+    bucket_path: your_aws_app_name
+    on:
+        branch: master
+    access_key_id:
+        secure: $AWS_ACCESS_KEY
+```
+
+To automate deployments, you'll need an `AWS_ACCESS_KEY`, for this, check AWS IAM:
+* Add User
+* Attach preexisting policies
+    * AWSElasticBeanstalk full access
+* Set the secret key in Travis _Environment Variables_.
+
+ #### EXPOSE Ports on `Dockerfile`
+
+__Dockerfile__
+```dockerfile
+FROM node:alpine as builder
+WORKDIR '/app'
+COPY package.json
+RUN npm install
+COPY . .
+RUN npm run build
+
+# run phase
+FROM nginx
+EXPOSE 80 // This only affects AWS EB, it will map it for incoming traffic!
+COPY --from=builder /app/build /usr/share/nginx/html
+
+```
+# Advanced: Multi-Container App
+Application services:
+
+Need _dev_ `Dockerfiles` for each
+* React App
+* Express Server
+* Worker
+
+Here, we'll specify the __enviornment values__.
+
+Docker compose should set a volume to 'share' files.
+
+ #### Adding Postgres as a Service
+
+`docker-compose.yml`
+```yml
+version: '1'
+services:
+    postgres:
+        image: 'postgres:latest'
+    redis:
+        image: 'redis:latest'
+    api:
+        build:
+            dockerfile: Dockerfile.dev
+            context: ./server
+        volumes:
+            - /app/node_modules
+            - ./server:/app
+        depends_on:
+            - postgres
+        environment:
+            - REDIS_HOST=redis
+            - REDIS_PORT=6379
+            - PGUSER=postgres
+            - PGHOST=postgres
+            - PGDATABASE=postgres
+            - PGPASSWORD=postgres_password
+            - PGPORT=5432
+    client:
+        build:
+            dockerfile: Dockerfile.dev
+            context: ./client
+        volumes:
+            - /app/node_modules
+            - ./client:/app
+    worker:
+        build:
+            dockerfile: Dockerfile.dev
+            context: ./worker
+        volumes:
+            - /app/node_modules
+            - ./worker:/app
+```
+
+ ### Nginx routing 
+
+What does the request start with?
+* `/api` redirect to Express Server
+* `/` redirect to React Server
+
+For this, we create `nginx/default.conf`:
+
+* Set an `upstream` client at `client:3000`
+* Set an `upstream` server at `server:5000`
+* Listen on port 80
+* If anoyone comes to `/` send them to client upstream
+* If anyone comes to `/api` send them to server upstream
+
+```conf
+upstream client {
+    server client:3000;
+}
+
+upstream api {
+    server server:5000;
+}
+
+server {
+    listen 80;
+
+    location / {
+        proxy_pass http://client;
+    }
+
+    location /sockjs-node {
+        proxy_pass http://client;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade
+        proxy_set_header Connection "Upgrade";
+    }
+
+    location /api {
+        rewrite /api/(.*) /$1 break;
+        proxy_pass http://api;
+    }
+}
+```
+
+Create `nginx/Dockerfile.dev`
+
+```dockerfile
+FROM nginx
+COPY ./default.conf /etc/nginx/conf.d/default.conf
+```
+
+Add it to `docker-compose.yml` services.
+```yml
+nginx:
+    restart: always
+    build:
+        dockerfile: Dockerfile.dev
+        context: ./nginx
+
+    ports:
+        - '3050:80' //access from local 3050 to 80 of container
+```
+
+Start everything!
+
+```
+docker-compose up --build
+```
+
+After any changes make sure you run `docker-compose down`, and then rebuild.
+
+ ## Multi-container deployment
+
+Github flow 
+* Push code to github
+* Travis automatically pulls repo
+* Travis builds a _test_ image, tests code
+* Travis builds _prod_ images
+* Travis pushes built _prod_ images to Docker hub
+* Travis pushes project to AWS EB
+* EB pulls images from Docker Hub, deploys
+
+We must make production `Dockerfile` for each service/container.
+
+ #### Multiple Nginx instances
+
+For production, the react/frontend files will be served statically in an nginx instance. So we need to create a it.
+
+Create this file: `client/nginx/default.conf`:
+```nginx
+server {
+    listen 3000;
+
+    location / {
+        root /usr/share/nginx/html;
+        index index.html index.htm
+        try_files $uri $uri/ /index.html; // React-routing
+    }
+
+}
+```
+
+And then, the _production_ `Dockerfile` for the client:
+```dockerfile
+FROM node:alpine as builder
+WORKDIR '/app'
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+FROM nginx
+EXPOSE 3000
+COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/build /user/share/nginx/html
+```
+
+ ## Travis configuration
+
+ #### `.travis.yml`
+
+```yml
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t <username>/<project> -f ./client/Dockerfile.dev ./client
+
+// Run test, if one exit with code 0, travis assumes build failed
+script:
+    - docker run <username>/<project> npm run test -- --coverage
+    - docker run <myotherproject> <myothertests>
+
+after_success:
+    - docker build -t <username>/multi-client ./client
+    - docker build -t <username>/multi-server ./server
+    - docker build -t <username>/multi-woker ./worker
+    # Log in to the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker -login -u "$DOCKER_ID" -- password-stdin
+    # Take those images and push them to Docker Hub
+    - docker push <username>/multi-client
+    - docker push <username>/multi-server
+    - docker push <username>/multi-worker
+```
+
+ #### Push images to Docker hub
+
+```
+docker login
+```
+
+ ## AWS Deployment
+
+ #### Definition files: `Dockerrun.aws.json`
+
+
 # Books to read
 * Building Bots with Node.js
     * Stefan Buttigieg, Milorad Jevdjenic
