@@ -1756,6 +1756,8 @@ script:
 
 AWS Elastic Beanstalk is an orchestration service offered by Amazon Web Services for deploying applications which orchestrates various AWS services, including EC2, S3, Simple Notification Service (SNS), CloudWatch, autoscaling, and Elastic Load Balancers.[2] Elastic Beanstalk provides an additional layer of abstraction over the bare server and OS; users instead see a pre-built combination of OS and platform.
 
+Elastic Beanstalk is actually delegating hosting to __Elastic Container Service (ECS)__, which has the instructions on how to run single containers.
+
  #### Travis fo deployment
 
 `.travis.yml`
@@ -2007,7 +2009,287 @@ docker login
 
  #### Definition files: `Dockerrun.aws.json`
 
+```json
+{
+    "AWSEBDockerrunVersion": 1,
+    "containerDefinitions": [
+        {
+            "name": "client",
+            "image": "<username>/multi-client",
+            "hostname": "client",
+            "essential": false,
+            "memory": 128
+        },
+        {
+            "name": "server",
+            "image": "<username>/multi-server",
+            "hostname": "api"
+            "essential": false,
+            "memory": 128
+        },
+        {
+            ....
+        },
+        {
+            "name": "nginx",
+            "image": "<usenrame>/multi-nginx",
+            "essential": true,
+            "portMappings": {   [
+                {
+                    "hostPort": 80,
+                    "containerPort": 80
+                }
+            ],
+            "links": ["client", "server"],
+            "memory": 128
+        }
+    ]
+}
+```
 
+ #### EB Environment
+
+When you create a new application, you can create a new environment.
+
+ #### Managed Data Service Providers
+
+Your application architecture may look something like this in Production:
+
+* AWS Elastic Beanstalk Instance
+    * Nginx
+        * Nginx w/Prod Files (React)
+        * Express Server
+    * Worker
+* AWS Elastic Cache
+    * Redis
+* AWS Relational Database Service
+    * Postgres
+
+So the connections on AWS will be like this:
+* EB Instance
+    * RDS (Postgres)
+    * EC (Redis)
+
+So we need to make the following:
+1. RDS Database Creation (Postgres)
+2. EC Redis Creation
+3. Create a custom _Security Group_ (Firewall rules)
+    * Here we will allow any incoming traffic on Port 80 from any IP, and from any other AWS service that has this security group
+4. Apply Security Group to resources (from EB)
+5. Provide Environment Variables on EB
+6. Get IAM Keys for Continuous Deployment (Travis Environment Variables)
+
+We add this to the Travis configuration
+
+ #### `.travis.yml`
+
+```yml
+deploy:
+    provider: elasticbeanstalk
+    region: ...
+    app: ...
+    env: ...
+    bucket_name: ...
+    bucket_path: ...
+    on:
+        branch: master
+    access_key_id: 
+        secure: $AWS_ACCESS_KEY
+    secret_access_key:
+        secure: $AWS_SECRET_KEY
+```
+
+---
+
+ ## AWS Configuration Cheat Sheet
+
+Steps listed are accurate as of 7-11-2019, keep in mind that AWS makes frequent small changes to their UI.
+
+ #### RDS Database Creation
+
+Go to AWS Management Console and use Find Services to search for RDS
+
+Click Create database button
+
+Select PostgreSQL
+
+Check 'only enable options eligible for RDS Free Usage Tier' and click Next button
+
+Scroll down to Settings Form
+
+Set DB Instance identifier to multi-docker-postgres
+
+Set Master Username to postgres
+
+Set Master Password to postgres and confirm
+
+Click Next button
+
+Make sure VPC is set to Default VPC
+
+Scroll down to Database Options
+
+Set Database Name to fibvalues
+
+Scroll down and click Create Database button
+
+ #### ElastiCache Redis Creation
+
+Go to AWS Management Console and use Find Services to search for ElastiCache
+
+Click Redis in sidebar
+
+Click the Create button
+
+Make sure Redis is set as Cluster Engine
+
+In Redis Settings form, set Name to multi-docker-redis
+
+Change Node type to 'cache.t2.micro'
+
+Change Number of replicas to 0
+
+Scroll down to Advanced Redis Settings
+
+Subnet Group should say “Create New"
+
+Set Name to redis-group
+
+VPC should be set to default VPC
+
+Tick all subnet’s boxes
+
+Scroll down and click Create button
+
+ #### Creating a Custom Security Group
+
+Go to AWS Management Console and use Find Services to search for VPC
+
+Click Security Groups in sidebar
+
+Click Create Security Group button
+
+Set Security group name to multi-docker
+
+Set Description to multi-docker
+
+Set VPC to default VPC
+
+Click Create Button
+
+Click Close
+
+Manually tick the empty field in the Name column of the new security group and type multi-docker, then click the checkmark icon.
+
+Scroll down and click Inbound Rules
+
+Click Edit Rules button
+
+Click Add Rule
+
+Set Port Range to 5432-6379
+
+Click in box next to Custom and start typing 'sg' into the box. Select the Security Group you just created, it should look similar to 'sg-…. | multi-docker’
+
+Click Save Rules button
+
+Click Close
+
+ #### Applying Security Groups to ElastiCache
+
+Go to AWS Management Console and use Find Services to search for ElastiCache
+
+Click Redis in Sidebar
+
+Check box next to Redis cluster and click Modify
+
+Change VPC Security group to the multi-docker group and click Save
+
+Click Modify
+
+ #### Applying Security Groups to RDS
+
+Go to AWS Management Console and use Find Services to search for RDS
+
+Click Databases in Sidebar and check box next to your instance
+
+Click Modify button
+
+Scroll down to Network and Security change Security group to multi-docker
+
+Scroll down and click Continue button
+
+Click Modify DB instance button
+
+ #### Applying Security Groups to Elastic Beanstalk
+
+Go to AWS Management Console and use Find Services to search for Elastic Beanstalk
+
+Click the multi-docker application tile
+
+Click Configuration link in Sidebar
+
+Click Modify in Instances card
+
+Scroll down to EC2 Security Groups and tick box next to multi-docker
+
+Click Apply and Click Confirm
+
+ #### Setting Environment Variables
+
+Go to AWS Management Console and use Find Services to search for Elastic Beanstalk
+
+Click the multi-docker application tile
+
+Click Configuration link in Sidebar
+
+Select Modify in the Software tile
+
+Scroll down to Environment properties
+
+In another tab Open up ElastiCache, click Redis and check the box next to your cluster. Find the Primary Endpoint and copy that value but omit the :6379
+
+Set REDIS_HOST key to the primary endpoint listed above, remember to omit :6379
+
+Set REDIS_PORT to 6379
+
+Set PGUSER to postgres
+
+Set PGPASSWORD to postgrespassword
+
+In another tab, open up RDS dashboard, click databases in sidebar, click your instance and scroll to Connectivity and Security. Copy the endpoint.
+
+Set the PGHOST key to the endpoint value listed above.
+
+Set PGDATABASE to fibvalues
+
+Set PGPORT to 5432
+
+Click Apply button
+
+ #### IAM Keys for Deployment
+
+Go to AWS Management Console and use Find Services to search for IAM
+
+Click Users link in the Sidebar
+
+Click Add User button
+
+Set User name to multi-docker-deployer
+
+Set Access-type to Programmatic Access
+
+Click Next:Permissions button
+
+Select Attach existing polices directly button
+
+Search for 'beanstalk' and check all boxes
+
+Click Next:Review
+
+Add tag if you want and Click Next:Review
+
+Click Create User
 # Books to read
 * Building Bots with Node.js
     * Stefan Buttigieg, Milorad Jevdjenic
