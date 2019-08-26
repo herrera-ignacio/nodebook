@@ -684,6 +684,10 @@ For DigitalOcean, you would use something like thise:
 docker-machine create --driver digitalocean --digitalocean-size 2gb \
 --digitalocean-access-token TOKEN-FROM-PROVIDER sandbox
 ```
+# Fundamentals: Enable ES6 modules (2019)
+https://timonweb.com/tutorials/how-to-enable-ecmascript-6-imports-in-nodejs/
+
+Using `esm` babel-less bundle-less JavaScript module loader, instead of the `.mjs` and experimental features.
 # Fundamentals: Heroku Deployment
 Basic steps for heroku deployment
 
