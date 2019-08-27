@@ -892,6 +892,8 @@ You can start using it adding this to your `package.json` scripts:
 ```json
 "coverage": "cross-env NODE_ENV=development nyc --reporter=text npm test"
 ```
+# Intermediate: gitlab-ci variables and node
+https://stackoverflow.com/questions/51974396/gitlab-ci-using-a-variable-with-npm-config-set
 # Intermediate: Routes testing (Supertest)
 We will be using the [Supertest framework](https://github.com/visionmedia/supertest#readme).
 
