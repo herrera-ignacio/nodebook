@@ -2297,10 +2297,14 @@ Add tag if you want and Click Next:Review
 
 Click Create User
 # Books to read
+To Read:
 * Building Bots with Node.js
     * Stefan Buttigieg, Milorad Jevdjenic
+
+Books read:
 * Advanced Node.js Development
     * Andrew Mead
+* NodeJS Complete Reference Guide
 # Book: NodeJs Complete Reference Guide
 
 These are references from the topics I've considered important from differents book I've read so far. 
