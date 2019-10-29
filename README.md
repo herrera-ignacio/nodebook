@@ -689,6 +689,10 @@ For DigitalOcean, you would use something like thise:
 docker-machine create --driver digitalocean --digitalocean-size 2gb \
 --digitalocean-access-token TOKEN-FROM-PROVIDER sandbox
 ```
+# Fundamentals: Enable ES6 modules (2019)
+https://timonweb.com/tutorials/how-to-enable-ecmascript-6-imports-in-nodejs/
+
+Using `esm` babel-less bundle-less JavaScript module loader, instead of the `.mjs` and experimental features.
 # Fundamentals: Heroku Deployment
 Basic steps for heroku deployment
 
@@ -893,6 +897,8 @@ You can start using it adding this to your `package.json` scripts:
 ```json
 "coverage": "cross-env NODE_ENV=development nyc --reporter=text npm test"
 ```
+# Intermediate: gitlab-ci variables and node
+https://stackoverflow.com/questions/51974396/gitlab-ci-using-a-variable-with-npm-config-set
 # Intermediate: Routes testing (Supertest)
 We will be using the [Supertest framework](https://github.com/visionmedia/supertest#readme).
 
@@ -2322,10 +2328,14 @@ Alternatives
 * (__GKE__): Google Cloud Kubernetes Engine
 * Do it yourself
 # Books to read
+To Read:
 * Building Bots with Node.js
     * Stefan Buttigieg, Milorad Jevdjenic
+
+Books read:
 * Advanced Node.js Development
     * Andrew Mead
+* NodeJS Complete Reference Guide
 # Book: NodeJs Complete Reference Guide
 
 These are references from the topics I've considered important from differents book I've read so far. 
