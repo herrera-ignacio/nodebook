@@ -61,6 +61,9 @@ Docker Containers
 
 CI/CD
 * [Advanced: CI/CD AWS & Travis](#advanced--ci-cd-aws---travis)
+
+Kubernetes
+* [Advanced: Kubernetes](#advanced--kubernetes)
 # Introduction: Node
 Node.js is a JavaScript runtime built on [Chrome's V8 Javascript engine](https://v8.dev/).
 
@@ -89,6 +92,8 @@ Node.js is a JavaScript runtime built on [Chrome's V8 Javascript engine](https:/
 What is __event-driven programming__? it's a computer programming paradigm in which control flow of the program is determined by the occurrence of events. These events are monitored by code known as an event listener that, if it detects that its assigned event has occurred, runs an event “handler”, typically a callback function or method. This handler deals with the event by responding to it with program code. The responses only run once we get a request — __that’s__ event driven programming. For this, Node provides the __event loop__. 
 
 Blocking methods execute synchronously and __non-blocking methods execute asynchronously__.
+
+[EVENT LOOP IN DETAIL](https://medium.com/@gaurav.pandvia/understanding-javascript-function-executions-tasks-event-loop-call-stack-more-part-1-5683dea1f5ec)
 
 ---
 
@@ -2290,6 +2295,32 @@ Click Next:Review
 Add tag if you want and Click Next:Review
 
 Click Create User
+# Advanced: Kubernetes
+ #### What is Kubernetes?
+
+System for running many different containers over multiple different machines.
+
+In Kubernetes, you have 'Clusters', each one with a _Master_ node that controls what each node does, where nodes are virtual machines or physical computers running containers, and where a _Load Balancer_ distributes traffic between those nodes when a _request_ arrives.
+
+ #### Why use Kubernetes?
+
+When you need to run many different containers with different images.
+
+Scaling strategy of Elastic Beanstalk is to replicate machines, but with little control over what each one was doing, using a _Load Balancer_ to manage traffic. This would be inneficient in the previous case.
+
+ ## Work with Kubernetes
+
+ #### Development
+
+* [Minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/): managing the VM __LOCAL__
+* [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/): managing containers in node
+
+ #### Production
+
+Alternatives
+* (__EKS__):  Amazon Elastic Kubernetes Service
+* (__GKE__): Google Cloud Kubernetes Engine
+* Do it yourself
 # Books to read
 * Building Bots with Node.js
     * Stefan Buttigieg, Milorad Jevdjenic
